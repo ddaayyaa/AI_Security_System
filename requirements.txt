@@ -3,3 +3,6 @@ flask-cors
 numpy
 Pillow
 opencv-python-headless
+opencv-python
+face_recognition
+deepface
