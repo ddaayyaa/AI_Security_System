@@ -1,8 +1,3 @@
-flask==3.0.0
-flask-cors
-numpy
-Pillow
 opencv-python-headless
-opencv-python
-face_recognition
-deepface
+cmake
+face-recognition-models
