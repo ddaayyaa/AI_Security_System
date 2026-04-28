@@ -1,6 +1,13 @@
 venv/
 __pycache__/
 *.pyc
+
+# Sensitive / runtime data
+database/
+face_data/
+logs/
 uploads/
-*.db
-.env
+
+# OS
+.DS_Store
+Thumbs.db

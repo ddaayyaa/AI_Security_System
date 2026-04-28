@@ -11,7 +11,15 @@ It allows admins to monitor entries, manage users, and detect faces using AI.
 - User Registration & Approval
 - Entry Logs & Alerts
 - Dataset Training System
+## 📸 Screenshots
+### 🔐 Login Page
+![Login](Screens/login.png)
 
+### 🧑‍💼 Admin Dashboard
+![Admin Dashboard](Screens/admin.png)
+
+### 🎥 Face Recognition in Action
+![Recognition](Screens/recognition.png)
 ## ⚙️ Installation
 
 ```bash
