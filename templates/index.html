@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SENTINEL PRO — AI Security System</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --c1:#00D4FF;--c2:#7B2FFF;--c3:#00FF88;--c4:#FF3366;
+  --bg:#030810;--card:#0A1628;--border:rgba(0,212,255,0.15);
+  --text:#D0E8FF;--muted:#4A6A85;
+  --fh:'Orbitron',monospace;--fb:'Exo 2',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse at 15% 50%,rgba(0,212,255,0.08) 0%,transparent 50%),
+             radial-gradient(ellipse at 85% 20%,rgba(123,47,255,0.10) 0%,transparent 50%),
+             radial-gradient(ellipse at 50% 90%,rgba(0,255,136,0.05) 0%,transparent 50%);
+  pointer-events:none;}
+
+/* Grid bg */
+.grid-bg{position:fixed;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);
+  background-size:40px 40px;}
+
+.wrap{width:100%;max-width:480px;padding:24px;position:relative;z-index:1;}
+
+/* Logo */
+.logo{text-align:center;margin-bottom:40px;}
+.logo-shield{width:72px;height:72px;margin:0 auto 16px;
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  border-radius:20px;display:flex;align-items:center;justify-content:center;
+  font-size:32px;box-shadow:0 0 40px rgba(0,212,255,0.3);
+  animation:glow 3s ease-in-out infinite;}
+@keyframes glow{0%,100%{box-shadow:0 0 30px rgba(0,212,255,0.3);}50%{box-shadow:0 0 60px rgba(0,212,255,0.5),0 0 100px rgba(123,47,255,0.3);}}
+.logo h1{font-family:var(--fh);font-size:28px;font-weight:900;letter-spacing:4px;
+  background:linear-gradient(135deg,#fff,var(--c1));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.logo p{color:var(--muted);font-size:11px;letter-spacing:3px;text-transform:uppercase;margin-top:6px;}
+
+/* Card */
+.card{background:var(--card);border:1px solid var(--border);border-radius:24px;
+  padding:36px;backdrop-filter:blur(10px);
+  box-shadow:0 20px 60px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.05);}
+
+/* Tabs */
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;
+  background:rgba(0,0,0,0.3);border-radius:12px;padding:4px;margin-bottom:28px;}
+.tab-btn{padding:10px;border:none;background:transparent;
+  color:var(--muted);font-family:var(--fb);font-size:13px;font-weight:500;
+  border-radius:9px;cursor:pointer;transition:all .2s;letter-spacing:0.5px;}
+.tab-btn.active{background:linear-gradient(135deg,var(--c1),var(--c2));
+  color:white;box-shadow:0 4px 12px rgba(0,212,255,0.25);}
+
+.form{display:none;}
+.form.active{display:block;}
+
+/* Form fields */
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:10px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:2px;margin-bottom:7px;font-weight:600;}
+.field input,.field select{
+  width:100%;background:rgba(0,212,255,0.04);
+  border:1px solid rgba(0,212,255,0.12);border-radius:10px;
+  padding:12px 14px;color:white;font-family:var(--fb);font-size:14px;
+  outline:none;transition:all .2s;}
+.field input:focus,.field select:focus{
+  border-color:var(--c1);box-shadow:0 0 0 3px rgba(0,212,255,0.1);}
+.field select option{background:#0A1628;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* Button */
+.btn{width:100%;padding:14px;border:none;border-radius:12px;
+  font-family:var(--fh);font-size:12px;font-weight:700;letter-spacing:2px;
+  cursor:pointer;transition:all .25s;margin-top:4px;}
+.btn-primary{background:linear-gradient(135deg,var(--c1),var(--c2));
+  color:white;box-shadow:0 4px 20px rgba(0,212,255,0.25);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,212,255,0.4);}
+.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none!important;}
+
+/* Alert */
+.alert{padding:12px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none;}
+.alert.show{display:flex;align-items:center;gap:8px;}
+.alert-success{background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.2);color:var(--c3);}
+.alert-error{background:rgba(255,51,102,0.08);border:1px solid rgba(255,51,102,0.2);color:var(--c4);}
+.alert-warn{background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);color:var(--c1);}
+
+/* Status pill */
+.engine-status{display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-top:24px;font-size:11px;color:var(--muted);}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--c3);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+/* Spinner */
+.spinner{display:inline-block;width:16px;height:16px;
+  border:2px solid rgba(255,255,255,0.2);border-top-color:white;
+  border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Scan lines */
+.scanline{position:fixed;top:0;left:0;width:100%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--c1),transparent);
+  animation:scanline 4s linear infinite;opacity:0.3;pointer-events:none;}
+@keyframes scanline{0%{top:-2px;}100%{top:100vh;}}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="scanline"></div>
+
+<div class="wrap">
+  <div class="logo">
+    <div class="logo-shield">🛡️</div>
+    <h1>SENTINEL PRO</h1>
+    <p>Advanced AI Security System</p>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('login')">🔐 LOGIN</button>
+      <button class="tab-btn" onclick="switchTab('register')">📝 REGISTER</button>
+    </div>
+
+    <!-- Alerts -->
+    <div class="alert alert-error" id="alertError"></div>
+    <div class="alert alert-success" id="alertSuccess"></div>
+    <div class="alert alert-warn" id="alertWarn"></div>
+
+    <!-- LOGIN FORM -->
+    <form class="form active" id="loginForm" onsubmit="return false;">
+      <div class="field">
+        <label>Username or Email</label>
+        <input type="text" id="loginUser" placeholder="Enter username or email" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()" id="loginBtn">
+        ACCESS SYSTEM
+      </button>
+      <div class="engine-status">
+        <div class="dot"></div>
+        <span>System Online • Demo: admin / admin123</span>
+      </div>
+    </form>
+
+    <!-- REGISTER FORM -->
+    <form class="form" id="registerForm" onsubmit="return false;">
+      <div class="field-row">
+        <div class="field">
+          <label>Full Name</label>
+          <input type="text" id="regName" placeholder="John Doe">
+        </div>
+        <div class="field">
+          <label>Username</label>
+          <input type="text" id="regUser" placeholder="johndoe">
+        </div>
+      </div>
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="regEmail" placeholder="john@example.com">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Phone</label>
+          <input type="text" id="regPhone" placeholder="+91 ...">
+        </div>
+        <div class="field">
+          <label>Department</label>
+          <input type="text" id="regDept" placeholder="Security">
+        </div>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="regPass" placeholder="Create password">
+      </div>
+      <button class="btn btn-primary" onclick="doRegister()" id="registerBtn">
+        CREATE ACCOUNT
+      </button>
+      <div class="engine-status">
+        <span style="color:var(--muted)">Account requires admin approval before login</span>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.form').forEach(f => f.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById(tab + 'Form').classList.add('active');
+  hideAlerts();
+}
+
+function hideAlerts() {
+  ['alertError','alertSuccess','alertWarn'].forEach(id => {
+    document.getElementById(id).classList.remove('show');
+  });
+}
+
+function showAlert(type, msg) {
+  hideAlerts();
+  const el = document.getElementById('alert' + type.charAt(0).toUpperCase() + type.slice(1));
+  el.innerHTML = (type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️') + ' ' + msg;
+  el.classList.add('show');
+}
+
+async function doLogin() {
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
+  if (!username || !password) { showAlert('error', 'Please fill all fields'); return; }
+
+  const btn = document.getElementById('loginBtn');
+  btn.innerHTML = '<span class="spinner"></span>AUTHENTICATING...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    const data = await res.json();
+    if (data.success) {
+      showAlert('success', 'Access granted! Redirecting...');
+      setTimeout(() => window.location.href = data.redirect, 800);
+    } else {
+      showAlert('error', data.error || 'Login failed');
+      btn.innerHTML = 'ACCESS SYSTEM';
+      btn.disabled = false;
+    }
+  } catch(e) {
+    showAlert('error', 'Connection error');
+    btn.innerHTML = 'ACCESS SYSTEM';
+    btn.disabled = false;
+  }
+}
+
+async function doRegister() {
+  const full_name = document.getElementById('regName').value.trim();
+  const username = document.getElementById('regUser').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPass').value;
+  const phone = document.getElementById('regPhone').value.trim();
+  const department = document.getElementById('regDept').value.trim();
+
+  if (!full_name || !username || !email || !password) {
+    showAlert('error', 'Please fill all required fields'); return;
+  }
+
+  const btn = document.getElementById('registerBtn');
+  btn.innerHTML = '<span class="spinner"></span>REGISTERING...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({full_name, username, email, password, phone, department})
+    });
+    const data = await res.json();
+    if (data.success) {
+      showAlert('success', data.message);
+      document.getElementById('registerForm').reset();
+    } else {
+      showAlert('error', data.error || 'Registration failed');
+    }
+  } catch(e) {
+    showAlert('error', 'Connection error');
+  } finally {
+    btn.innerHTML = 'CREATE ACCOUNT';
+    btn.disabled = false;
+  }
+}
+
+// Enter key support
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (document.getElementById('loginForm').classList.contains('active')) doLogin();
+    else doRegister();
+  }
+});
+</script>
+</body>
+</html>

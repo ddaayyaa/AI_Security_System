@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SENTINEL PRO — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --c1:#00D4FF;--c2:#7B2FFF;--c3:#00FF88;--c4:#FF3366;--c5:#FFB800;
+  --bg:#030810;--card:#0A1628;--card2:#0F1E35;--border:rgba(0,212,255,0.12);
+  --text:#D0E8FF;--muted:#4A6A85;
+  --fh:'Orbitron',monospace;--fb:'Exo 2',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);display:flex;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse at 0% 50%,rgba(0,212,255,0.06) 0%,transparent 40%),
+             radial-gradient(ellipse at 100% 0%,rgba(123,47,255,0.08) 0%,transparent 40%);
+  pointer-events:none;z-index:0;}
+
+/* Sidebar */
+.sidebar{width:240px;flex-shrink:0;background:rgba(10,22,40,0.95);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;height:100vh;z-index:100;
+  backdrop-filter:blur(20px);}
+.sidebar-logo{padding:24px 20px;border-bottom:1px solid var(--border);}
+.sidebar-logo h2{font-family:var(--fh);font-size:14px;font-weight:900;letter-spacing:2px;
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.sidebar-logo span{display:block;font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:3px;}
+.nav{flex:1;padding:16px 12px;overflow-y:auto;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;
+  border-radius:10px;cursor:pointer;margin-bottom:3px;
+  color:var(--muted);font-size:13px;font-weight:500;transition:all .2s;border:none;background:none;width:100%;}
+.nav-item:hover{background:rgba(0,212,255,0.06);color:white;}
+.nav-item.active{background:rgba(0,212,255,0.1);color:var(--c1);
+  border:1px solid rgba(0,212,255,0.15);}
+.nav-item .icon{font-size:16px;width:20px;text-align:center;}
+.nav-section{font-size:9px;color:var(--muted);letter-spacing:2px;
+  padding:14px 14px 6px;text-transform:uppercase;}
+.badge{margin-left:auto;background:var(--c4);color:white;
+  font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700;}
+.badge.green{background:var(--c3);color:#000;}
+
+.sidebar-user{padding:16px;border-top:1px solid var(--border);}
+.user-info{display:flex;align-items:center;gap:10px;}
+.user-avatar{width:36px;height:36px;border-radius:50%;
+  background:{{user.avatar_color}};display:flex;align-items:center;justify-content:center;
+  font-family:var(--fh);font-size:13px;font-weight:700;color:white;flex-shrink:0;}
+.user-name{font-size:13px;font-weight:600;color:white;}
+.user-role{font-size:10px;color:var(--c1);letter-spacing:1px;}
+
+/* Main */
+.main{margin-left:240px;flex:1;padding:24px;position:relative;z-index:1;min-height:100vh;}
+
+/* Top bar */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;}
+.page-title{font-family:var(--fh);font-size:18px;font-weight:700;letter-spacing:2px;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.status-pill{display:flex;align-items:center;gap:7px;background:var(--card);
+  border:1px solid var(--border);border-radius:20px;padding:7px 14px;font-size:12px;}
+.dot{width:7px;height:7px;border-radius:50%;}
+.dot.green{background:var(--c3);box-shadow:0 0 8px var(--c3);animation:pulse 2s infinite;}
+.dot.red{background:var(--c4);}
+.dot.yellow{background:var(--c5);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+/* Panels */
+.panel{display:none;animation:fadeIn .3s ease;}
+.panel.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+/* Stat cards */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:18px 20px;position:relative;overflow:hidden;transition:transform .2s;}
+.stat:hover{transform:translateY(-2px);}
+.stat::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent,var(--c1)),transparent);}
+.stat-icon{font-size:22px;margin-bottom:10px;}
+.stat-val{font-family:var(--fh);font-size:26px;font-weight:700;
+  color:var(--accent,var(--c1));}
+.stat-lbl{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:3px;}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;}
+.card-title{font-family:var(--fh);font-size:12px;font-weight:700;letter-spacing:2px;
+  color:var(--muted);margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+@media(max-width:1100px){.grid-3{grid-template-columns:1fr 1fr;}.grid-2{grid-template-columns:1fr;}}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;
+  border:none;border-radius:10px;font-family:var(--fb);font-size:13px;
+  font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-primary{background:linear-gradient(135deg,var(--c1),var(--c2));color:white;}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,212,255,0.3);}
+.btn-success{background:linear-gradient(135deg,var(--c3),#22C55E);color:#000;}
+.btn-danger{background:linear-gradient(135deg,var(--c4),#CC0033);color:white;}
+.btn-warn{background:linear-gradient(135deg,var(--c5),#E67E22);color:#000;}
+.btn-sm{padding:6px 14px;font-size:12px;}
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead{background:rgba(0,212,255,0.06);}
+th{padding:11px 14px;text-align:left;font-size:10px;text-transform:uppercase;
+  letter-spacing:1.5px;color:var(--muted);font-family:var(--fh);font-weight:600;
+  border-bottom:1px solid var(--border);}
+td{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(0,212,255,0.03);}
+
+/* Status pills */
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;
+  border-radius:20px;font-size:11px;font-weight:600;letter-spacing:0.5px;}
+.pill-green{background:rgba(0,255,136,0.12);color:var(--c3);border:1px solid rgba(0,255,136,0.2);}
+.pill-red{background:rgba(255,51,102,0.12);color:var(--c4);border:1px solid rgba(255,51,102,0.2);}
+.pill-yellow{background:rgba(255,184,0,0.12);color:var(--c5);border:1px solid rgba(255,184,0,0.2);}
+.pill-blue{background:rgba(0,212,255,0.12);color:var(--c1);border:1px solid rgba(0,212,255,0.2);}
+
+/* Inputs */
+.inp{background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.12);
+  border-radius:9px;padding:10px 13px;color:white;font-family:var(--fb);
+  font-size:13px;outline:none;transition:all .2s;width:100%;}
+.inp:focus{border-color:var(--c1);box-shadow:0 0 0 3px rgba(0,212,255,0.08);}
+.inp-label{font-size:10px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:1.5px;margin-bottom:6px;display:block;}
+
+/* Upload zone */
+.upload-zone{border:2px dashed rgba(0,212,255,0.2);border-radius:16px;
+  padding:40px;text-align:center;cursor:pointer;transition:all .2s;
+  background:rgba(0,212,255,0.02);}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--c1);background:rgba(0,212,255,0.06);}
+.upload-zone input{display:none;}
+.upload-icon{font-size:40px;margin-bottom:12px;}
+.upload-zone h3{font-size:15px;margin-bottom:6px;color:white;}
+.upload-zone p{font-size:12px;color:var(--muted);}
+
+/* Camera */
+#cameraFeed{width:100%;border-radius:14px;border:1px solid var(--border);background:#000;min-height:300px;display:flex;align-items:center;justify-content:center;}
+#videoEl{width:100%;border-radius:14px;display:none;}
+.cam-overlay{position:relative;}
+.scan-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:200px;height:200px;pointer-events:none;}
+.scan-corner{position:absolute;width:24px;height:24px;border-color:var(--c1);border-style:solid;}
+.sc-tl{top:0;left:0;border-width:3px 0 0 3px;}
+.sc-tr{top:0;right:0;border-width:3px 3px 0 0;}
+.sc-bl{bottom:0;left:0;border-width:0 0 3px 3px;}
+.sc-br{bottom:0;right:0;border-width:0 3px 3px 0;}
+.scan-line{position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--c1),transparent);
+  animation:scanY 2s linear infinite;opacity:0.7;}
+@keyframes scanY{0%{top:0;}100%{top:100%;}}
+
+/* Detection result */
+.detect-card{padding:16px;border-radius:12px;margin-top:14px;}
+.detect-auth{background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.2);}
+.detect-unauth{background:rgba(255,51,102,0.08);border:1px solid rgba(255,51,102,0.2);}
+.detect-name{font-family:var(--fh);font-size:16px;font-weight:700;margin-bottom:4px;}
+.detect-conf{font-size:12px;color:var(--muted);}
+
+/* Training progress */
+.prog-bar{height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;margin-top:8px;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--c1),var(--c3));
+  border-radius:4px;transition:width .4s ease;width:0%;}
+
+/* Image results */
+.img-result{background:var(--card2);border:1px solid var(--border);
+  border-radius:14px;padding:16px;margin-bottom:12px;}
+.img-result img{width:100%;border-radius:10px;max-height:220px;object-fit:cover;margin-bottom:10px;}
+.img-fname{font-size:12px;color:var(--muted);margin-bottom:8px;}
+
+/* Alerts */
+.alert-item{background:var(--card2);border-left:3px solid var(--c4);
+  border-radius:10px;padding:14px 16px;margin-bottom:8px;
+  display:flex;align-items:center;justify-content:space-between;}
+
+/* Spinner */
+.spinner{display:inline-block;width:16px;height:16px;
+  border:2px solid rgba(255,255,255,0.2);border-top-color:white;
+  border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;z-index:9999;
+  background:var(--card2);border:1px solid var(--border);border-radius:14px;
+  padding:14px 20px;font-size:13px;transform:translateY(80px);opacity:0;
+  transition:all .3s;max-width:320px;display:flex;align-items:center;gap:8px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.ok{border-color:rgba(0,255,136,0.3);}
+.toast.err{border-color:rgba(255,51,102,0.3);}
+
+/* Hourly chart */
+.bar-chart{display:flex;align-items:flex-end;gap:4px;height:80px;padding-top:10px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.bar{width:100%;background:linear-gradient(180deg,var(--c1),var(--c2));
+  border-radius:3px 3px 0 0;min-height:3px;transition:height .5s ease;}
+.bar-lbl{font-size:8px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h2>SENTINEL PRO</h2>
+    <span>ADMIN CONTROL CENTER</span>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Main</div>
+    <button class="nav-item active" onclick="nav('dashboard',this)"><span class="icon">📊</span>Dashboard</button>
+    <button class="nav-item" onclick="nav('live',this)"><span class="icon">📹</span>Live Monitor</button>
+    <button class="nav-item" onclick="nav('upload',this)"><span class="icon">🖼️</span>Image Recognize</button>
+
+    <div class="nav-section">Management</div>
+    <button class="nav-item" onclick="nav('users',this)"><span class="icon">👥</span>User Approvals<span class="badge" id="pendingBadge">0</span></button>
+    <button class="nav-item" onclick="nav('faces',this)"><span class="icon">🧠</span>Face Database</button>
+    <button class="nav-item" onclick="nav('logs',this)"><span class="icon">📋</span>Entry Logs</button>
+    <button class="nav-item" onclick="nav('alerts',this)"><span class="icon">🚨</span>Alerts<span class="badge" id="alertBadge">0</span></button>
+
+    <div class="nav-section">AI Engine</div>
+    <button class="nav-item" onclick="nav('train',this)"><span class="icon">🎯</span>Train Model</button>
+    <button class="nav-item" onclick="nav('register',this)"><span class="icon">➕</span>Register Faces</button>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-info">
+      <div class="user-avatar" style="background:{{user.avatar_color}}">{{user.username[0]|upper}}</div>
+      <div>
+        <div class="user-name">{{user.full_name}}</div>
+        <div class="user-role">ADMINISTRATOR</div>
+      </div>
+    </div>
+    <button class="btn btn-danger btn-sm" style="width:100%;margin-top:10px;justify-content:center;" onclick="logout()">Logout</button>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<main class="main">
+  <div class="topbar">
+    <div class="page-title" id="pageTitle">DASHBOARD</div>
+    <div class="topbar-right">
+      <div class="status-pill">
+        <div class="dot {% if engine_status.fr %}green{% else %}red{% endif %}"></div>
+        <span>Face Engine: {% if engine_status.fr %}Active{% else %}Demo Mode{% endif %}</span>
+      </div>
+      <div class="status-pill">
+        <div class="dot {% if engine_status.loaded %}green{% else %}yellow{% endif %}"></div>
+        <span>{{engine_status.persons}} Persons Loaded</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ DASHBOARD ══════════ -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat" style="--accent:var(--c1)"><div class="stat-icon">🚦</div><div class="stat-val" id="s-total">—</div><div class="stat-lbl">Total Entries</div></div>
+      <div class="stat" style="--accent:var(--c3)"><div class="stat-icon">✅</div><div class="stat-val" id="s-auth">—</div><div class="stat-lbl">Authorized</div></div>
+      <div class="stat" style="--accent:var(--c4)"><div class="stat-icon">❌</div><div class="stat-val" id="s-unauth">—</div><div class="stat-lbl">Unauthorized</div></div>
+      <div class="stat" style="--accent:var(--c2)"><div class="stat-icon">🧠</div><div class="stat-val" id="s-persons">—</div><div class="stat-lbl">Registered Faces</div></div>
+      <div class="stat" style="--accent:var(--c5)"><div class="stat-icon">⏳</div><div class="stat-val" id="s-pending">—</div><div class="stat-lbl">Pending Approvals</div></div>
+      <div class="stat" style="--accent:var(--c4)"><div class="stat-icon">🚨</div><div class="stat-val" id="s-alerts">—</div><div class="stat-lbl">Active Alerts</div></div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:16px;">
+      <div class="card">
+        <div class="card-title">📈 TODAY'S HOURLY ACTIVITY</div>
+        <div class="bar-chart" id="hourlyChart"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔴 RECENT ENTRIES</div>
+        <div id="recentList" style="max-height:200px;overflow-y:auto;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚡ QUICK ACTIONS</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;">
+        <button class="btn btn-primary" onclick="nav('live',document.querySelector('[onclick*=live]'))">📹 Open Live Monitor</button>
+        <button class="btn btn-success" onclick="nav('train',document.querySelector('[onclick*=train]'))">🎯 Train AI Model</button>
+        <button class="btn btn-warn" onclick="nav('users',document.querySelector('[onclick*=users]'))">👥 Review Approvals</button>
+        <button class="btn" style="background:var(--card2);border:1px solid var(--border);" onclick="loadEngine()">🔄 Reload Face Engine</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ LIVE MONITOR ══════════ -->
+  <div class="panel" id="panel-live">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">📹 LIVE CAMERA FEED</div>
+        <div class="cam-overlay" id="cameraFeed">
+          <div id="camPlaceholder" style="text-align:center;padding:60px 20px;">
+            <div style="font-size:48px;margin-bottom:16px;opacity:0.3;">📷</div>
+            <div style="color:var(--muted);font-size:14px;">Click START to begin live monitoring</div>
+          </div>
+          <video id="videoEl" autoplay muted playsinline></video>
+          <canvas id="canvasEl" style="display:none;"></canvas>
+          <div class="scan-frame" id="scanFrame" style="display:none;">
+            <div class="scan-corner sc-tl"></div>
+            <div class="scan-corner sc-tr"></div>
+            <div class="scan-corner sc-bl"></div>
+            <div class="scan-corner sc-br"></div>
+            <div class="scan-line"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <button class="btn btn-success" id="startCamBtn" onclick="startCamera()" style="flex:1;justify-content:center;">▶ START CAMERA</button>
+          <button class="btn btn-danger" id="stopCamBtn" onclick="stopCamera()" style="flex:1;justify-content:center;" disabled>⏹ STOP</button>
+          <select class="inp" id="gateSelect" style="width:140px;">
+            <option>Main Gate</option>
+            <option>Gate A</option>
+            <option>Gate B</option>
+            <option>VIP Gate</option>
+            <option>Backstage</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🎯 DETECTION RESULTS</div>
+        <div id="liveResults">
+          <div style="text-align:center;padding:60px 20px;color:var(--muted);">
+            <div style="font-size:36px;margin-bottom:10px;">🔍</div>
+            <div>Awaiting detection...</div>
+          </div>
+        </div>
+        <div style="margin-top:16px;">
+          <div class="card-title">📊 SESSION STATS</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+            <div style="text-align:center;background:var(--card2);border-radius:10px;padding:12px;">
+              <div style="font-family:var(--fh);font-size:20px;color:var(--c1);" id="sess-total">0</div>
+              <div style="font-size:10px;color:var(--muted);">Total</div>
+            </div>
+            <div style="text-align:center;background:var(--card2);border-radius:10px;padding:12px;">
+              <div style="font-family:var(--fh);font-size:20px;color:var(--c3);" id="sess-auth">0</div>
+              <div style="font-size:10px;color:var(--muted);">Auth</div>
+            </div>
+            <div style="text-align:center;background:var(--card2);border-radius:10px;padding:12px;">
+              <div style="font-family:var(--fh);font-size:20px;color:var(--c4);" id="sess-unauth">0</div>
+              <div style="font-size:10px;color:var(--muted);">Unauth</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ IMAGE RECOGNIZE ══════════ -->
+  <div class="panel" id="panel-upload">
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">🖼️ UPLOAD IMAGES FOR RECOGNITION</div>
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('recogFiles').click()">
+        <div class="upload-icon">📁</div>
+        <h3>Drop images here or click to browse</h3>
+        <p>No limit — upload any number of images. JPG, PNG, WEBP supported.</p>
+        <input type="file" id="recogFiles" accept="image/*" multiple onchange="handleRecogFiles(this)">
+        <div id="recogFileList" style="margin-top:12px;font-size:12px;color:var(--c3);"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px;align-items:center;">
+        <select class="inp" id="uploadGate" style="width:160px;">
+          <option>Upload Gate</option><option>Main Gate</option><option>Gate A</option><option>Gate B</option>
+        </select>
+        <button class="btn btn-primary" onclick="runRecognition()" id="recogBtn" disabled style="flex:1;justify-content:center;">
+          🔍 RECOGNIZE FACES
+        </button>
+      </div>
+      <div id="recogProgress" style="display:none;margin-top:12px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;" id="recogProgText">Processing...</div>
+        <div class="prog-bar"><div class="prog-fill" id="recogProgFill"></div></div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div id="recogSummary" style="display:none;margin-bottom:16px;">
+      <div class="stats-grid" id="recogStats"></div>
+    </div>
+
+    <!-- Results -->
+    <div id="recogResults"></div>
+  </div>
+
+  <!-- ══════════ USER APPROVALS ══════════ -->
+  <div class="panel" id="panel-users">
+    <div style="display:flex;gap:10px;margin-bottom:16px;">
+      <button class="btn btn-primary btn-sm" onclick="loadUsers('pending')">⏳ Pending</button>
+      <button class="btn btn-sm" style="background:var(--card2);border:1px solid var(--border);" onclick="loadUsers('approved')">✅ Approved</button>
+      <button class="btn btn-sm" style="background:var(--card2);border:1px solid var(--border);" onclick="loadUsers('all')">👥 All Users</button>
+    </div>
+    <div class="card">
+      <div class="card-title">👥 USER ACCOUNTS</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>User</th><th>Email</th><th>Department</th>
+            <th>Registered</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="usersTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ FACE DATABASE ══════════ -->
+  <div class="panel" id="panel-faces">
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between;">
+        <span>🧠 REGISTERED FACE DATABASE</span>
+        <button class="btn btn-primary btn-sm" onclick="nav('register',document.querySelector('[onclick*=register]'))">+ Register New</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Person</th><th>Category</th><th>Registered By</th>
+            <th>Registered At</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="facesTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ ENTRY LOGS ══════════ -->
+  <div class="panel" id="panel-logs">
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <button class="btn btn-sm" style="background:var(--card2);border:1px solid var(--border);" onclick="loadLogs('')">All</button>
+      <button class="btn btn-success btn-sm" onclick="loadLogs('authorized')">✅ Authorized</button>
+      <button class="btn btn-danger btn-sm" onclick="loadLogs('unauthorized')">❌ Unauthorized</button>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 ENTRY LOG RECORDS</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Person</th><th>Status</th><th>Confidence</th>
+            <th>Gate</th><th>Method</th><th>Time</th><th>Action</th>
+          </tr></thead>
+          <tbody id="logsTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ ALERTS ══════════ -->
+  <div class="panel" id="panel-alerts">
+    <div class="card">
+      <div class="card-title">🚨 ACTIVE SECURITY ALERTS</div>
+      <div id="alertsList"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ TRAIN MODEL ══════════ -->
+  <div class="panel" id="panel-train">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">📂 UPLOAD TRAINING DATASET</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7;">
+          Upload images organized in folders:<br>
+          <code style="color:var(--c1);">person_name/image1.jpg</code><br>
+          The system will train on all uploaded images.
+        </div>
+        <div class="upload-zone" onclick="document.getElementById('trainFiles').click()">
+          <div class="upload-icon">🎯</div>
+          <h3>Upload Dataset Images</h3>
+          <p>Select all images — they will be sorted by folder/person name</p>
+          <input type="file" id="trainFiles" accept="image/*" multiple webkitdirectory onchange="handleTrainUpload(this)">
+          <div id="trainFileInfo" style="margin-top:10px;font-size:12px;color:var(--c3);"></div>
+        </div>
+        <button class="btn btn-success" onclick="uploadTrainingData()" id="uploadTrainBtn" disabled style="width:100%;justify-content:center;margin-top:12px;">
+          ⬆️ UPLOAD DATASET
+        </button>
+      </div>
+      <div class="card">
+        <div class="card-title">🚀 TRAIN AI MODEL</div>
+        <div style="margin-bottom:20px;">
+          <label class="inp-label">Model Type</label>
+          <select class="inp" id="modelType">
+            <option value="face_recognition">face_recognition (HOG + CNN)</option>
+            <option value="deepface">DeepFace (Deep Learning)</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="startTraining()" id="trainBtn" style="width:100%;justify-content:center;margin-bottom:16px;">
+          🎯 START TRAINING
+        </button>
+        <div id="trainStatus" style="display:none;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+            <span id="trainCurrentText">Initializing...</span>
+            <span id="trainPct">0%</span>
+          </div>
+          <div class="prog-bar"><div class="prog-fill" id="trainProgFill"></div></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px;" id="trainDetail"></div>
+        </div>
+        <div id="trainResult" style="display:none;margin-top:16px;padding:14px;background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.15);border-radius:10px;">
+          <div style="color:var(--c3);font-weight:600;margin-bottom:8px;">✅ Training Complete!</div>
+          <div id="trainResultText" style="font-size:12px;color:var(--muted);"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">📅 TRAINING HISTORY</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Model</th><th>Persons</th><th>Images</th><th>Status</th><th>Duration</th></tr></thead>
+          <tbody id="trainHistory"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ REGISTER FACES ══════════ -->
+  <div class="panel" id="panel-register">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">👤 PERSON DETAILS</div>
+        <div style="margin-bottom:14px;">
+          <label class="inp-label">Full Name *</label>
+          <input class="inp" id="regPersonName" placeholder="Enter full name">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div>
+            <label class="inp-label">Person ID</label>
+            <input class="inp" id="regPersonId" placeholder="Auto-generated">
+          </div>
+          <div>
+            <label class="inp-label">Category</label>
+            <select class="inp" id="regCategory">
+              <option value="staff">Staff</option>
+              <option value="vip">VIP</option>
+              <option value="vendor">Vendor</option>
+              <option value="security">Security</option>
+              <option value="guest">Guest</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+          <label class="inp-label" style="margin:0;">Authorized Access</label>
+          <input type="checkbox" id="regAuthorized" checked style="width:18px;height:18px;accent-color:var(--c3);">
+        </div>
+        <div class="card-title">🖼️ FACE IMAGES</div>
+        <div class="upload-zone" onclick="document.getElementById('faceImages').click()">
+          <div class="upload-icon">📸</div>
+          <h3>Upload Face Photos</h3>
+          <p>Upload multiple angles for better accuracy</p>
+          <input type="file" id="faceImages" accept="image/*" multiple onchange="handleFaceImages(this)">
+          <div id="faceFileInfo" style="margin-top:10px;font-size:12px;color:var(--c3);"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">✅ REGISTRATION TIPS</div>
+        <div style="font-size:13px;color:var(--muted);line-height:2;margin-bottom:20px;">
+          📸 Upload 5-10 images per person<br>
+          💡 Include different angles & lighting<br>
+          🚫 Avoid blurry or low-res images<br>
+          📐 Face should be clearly visible<br>
+          🌅 Include indoor & outdoor photos
+        </div>
+        <button class="btn btn-success" onclick="registerFace()" id="registerFaceBtn" style="width:100%;justify-content:center;margin-bottom:12px;">
+          ➕ REGISTER PERSON
+        </button>
+        <div id="registerResult" style="display:none;"></div>
+        <div style="margin-top:20px;">
+          <div class="card-title">⚡ ENGINE STATUS</div>
+          <div style="font-size:13px;line-height:2;color:var(--muted);">
+            Face Recognition: <span style="color:{{'var(--c3)' if engine_status.fr else 'var(--c4)'}}">{{'✓ Active' if engine_status.fr else '✗ Not Installed'}}</span><br>
+            OpenCV: <span style="color:{{'var(--c3)' if engine_status.cv2 else 'var(--c4)'}}">{{'✓ Active' if engine_status.cv2 else '✗ Not Installed'}}</span><br>
+            Persons Loaded: <span style="color:var(--c1);">{{engine_status.persons}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+// ── State ──────────────────────────────────────────────────────
+let camStream = null, camInterval = null;
+let sessTotal=0, sessAuth=0, sessUnauth=0;
+let recogFilesArr = [], trainFilesArr = [], faceFilesArr = [];
+
+// ── Navigation ─────────────────────────────────────────────────
+function nav(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  if(el) el.classList.add('active');
+  const titles = {dashboard:'DASHBOARD',live:'LIVE MONITOR',upload:'IMAGE RECOGNITION',
+    users:'USER APPROVALS',faces:'FACE DATABASE',logs:'ENTRY LOGS',
+    alerts:'SECURITY ALERTS',train:'TRAIN AI MODEL',register:'REGISTER FACES'};
+  document.getElementById('pageTitle').textContent = titles[id] || id.toUpperCase();
+
+  if(id==='dashboard') loadDashboard();
+  else if(id==='users') loadUsers('pending');
+  else if(id==='faces') loadFaces();
+  else if(id==='logs') loadLogs('');
+  else if(id==='alerts') loadAlerts();
+  else if(id==='train') loadTrainHistory();
+}
+
+// ── Toast ──────────────────────────────────────────────────────
+function toast(msg, ok=true) {
+  const t = document.getElementById('toast');
+  t.className = `toast show ${ok?'ok':'err'}`;
+  t.innerHTML = (ok?'✅':'❌') + ' ' + msg;
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+// ── Format ────────────────────────────────────────────────────
+function fmtTime(ts) {
+  if(!ts) return '—';
+  const d = new Date(ts);
+  return d.toLocaleString();
+}
+function fmtAgo(ts) {
+  if(!ts) return '—';
+  const diff = (Date.now()-new Date(ts))/1000;
+  if(diff<60) return `${Math.floor(diff)}s ago`;
+  if(diff<3600) return `${Math.floor(diff/60)}m ago`;
+  return `${Math.floor(diff/3600)}h ago`;
+}
+
+// ── Dashboard ──────────────────────────────────────────────────
+async function loadDashboard() {
+  const d = await fetch('/api/stats').then(r=>r.json());
+  document.getElementById('s-total').textContent = d.total_entries;
+  document.getElementById('s-auth').textContent = d.authorized;
+  document.getElementById('s-unauth').textContent = d.unauthorized;
+  document.getElementById('s-persons').textContent = d.registered_persons;
+  document.getElementById('s-pending').textContent = d.pending_users;
+  document.getElementById('s-alerts').textContent = d.active_alerts;
+  document.getElementById('pendingBadge').textContent = d.pending_users;
+  document.getElementById('alertBadge').textContent = d.active_alerts;
+
+  // Hourly chart
+  const chart = document.getElementById('hourlyChart');
+  const max = Math.max(...d.hourly.map(h=>h.cnt),1);
+  chart.innerHTML = d.hourly.length ? d.hourly.map(h=>
+    `<div class="bar-col"><div class="bar" style="height:${Math.max(4,(h.cnt/max)*70)}px;" title="${h.cnt} entries"></div><div class="bar-lbl">${h.hr}</div></div>`
+  ).join('') : '<div style="color:var(--muted);font-size:13px;text-align:center;width:100%;">No data today</div>';
+
+  // Recent
+  document.getElementById('recentList').innerHTML = d.recent_entries.slice(0,8).map(e=>`
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span>${e.status==='authorized'?'✅':'❌'}</span>
+        <span>${e.person_name}</span>
+      </div>
+      <div style="color:var(--muted);">${fmtAgo(e.timestamp)}</div>
+    </div>`).join('') || '<div style="color:var(--muted);text-align:center;padding:20px;">No entries yet</div>';
+}
+
+// ── Camera ─────────────────────────────────────────────────────
+async function startCamera() {
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:640,height:480}});
+    const v = document.getElementById('videoEl');
+    v.srcObject = camStream;
+    v.style.display = 'block';
+    document.getElementById('camPlaceholder').style.display = 'none';
+    document.getElementById('scanFrame').style.display = 'block';
+    document.getElementById('startCamBtn').disabled = true;
+    document.getElementById('stopCamBtn').disabled = false;
+    sessTotal=sessAuth=sessUnauth=0;
+
+    camInterval = setInterval(captureAndRecognize, 2500);
+    toast('Camera started');
+  } catch(e) {
+    toast('Camera error: ' + e.message, false);
+  }
+}
+
+function stopCamera() {
+  if(camStream) { camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
+  clearInterval(camInterval);
+  const v = document.getElementById('videoEl');
+  v.style.display = 'none';
+  document.getElementById('camPlaceholder').style.display = 'flex';
+  document.getElementById('scanFrame').style.display = 'none';
+  document.getElementById('startCamBtn').disabled = false;
+  document.getElementById('stopCamBtn').disabled = true;
+  toast('Camera stopped');
+}
+
+async function captureAndRecognize() {
+  const v = document.getElementById('videoEl');
+  const c = document.getElementById('canvasEl');
+  c.width = v.videoWidth || 640;
+  c.height = v.videoHeight || 480;
+  c.getContext('2d').drawImage(v,0,0);
+  const b64 = c.toDataURL('image/jpeg',0.8);
+  const gate = document.getElementById('gateSelect').value;
+
+  try {
+    const res = await fetch('/api/recognize/frame',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({image:b64,gate})
+    });
+    const data = await res.json();
+    if(data.results && data.results.length) {
+      renderLiveResult(data.results[0]);
+      sessTotal++;
+      if(data.results[0].authorized) sessAuth++; else sessUnauth++;
+      document.getElementById('sess-total').textContent=sessTotal;
+      document.getElementById('sess-auth').textContent=sessAuth;
+      document.getElementById('sess-unauth').textContent=sessUnauth;
+    }
+  } catch(e) {}
+}
+
+function renderLiveResult(r) {
+  const isAuth = r.authorized;
+  document.getElementById('liveResults').innerHTML = `
+    <div class="detect-card ${isAuth?'detect-auth':'detect-unauth'}">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="font-size:36px;">${isAuth?'✅':'🚫'}</div>
+        <div>
+          <div class="detect-name" style="color:${isAuth?'var(--c3)':'var(--c4)'}">
+            ${r.person_name}
+          </div>
+          <div class="detect-conf">
+            ${isAuth?`Confidence: ${r.confidence}%`:'No match found in database'}
+          </div>
+          ${r.meta?.category?`<div class="pill ${isAuth?'pill-green':'pill-red'}" style="margin-top:6px;">${r.meta.category}</div>`:''}
+        </div>
+        <div style="margin-left:auto;">
+          <div class="pill ${isAuth?'pill-green':'pill-red'}" style="font-size:13px;padding:6px 14px;">
+            ${isAuth?'AUTHORIZED':'UNAUTHORIZED'}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);text-align:right;margin-top:6px;">${new Date().toLocaleTimeString()}</div>
+  `;
+}
+
+// ── Image Recognition ──────────────────────────────────────────
+function handleRecogFiles(input) {
+  recogFilesArr = Array.from(input.files);
+  document.getElementById('recogFileList').textContent =
+    `✓ ${recogFilesArr.length} image(s) selected`;
+  document.getElementById('recogBtn').disabled = false;
+}
+
+async function runRecognition() {
+  if(!recogFilesArr.length) return;
+  const btn = document.getElementById('recogBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Recognizing...';
+  document.getElementById('recogProgress').style.display = 'block';
+  document.getElementById('recogResults').innerHTML = '';
+  document.getElementById('recogSummary').style.display = 'none';
+
+  const fd = new FormData();
+  recogFilesArr.forEach(f => fd.append('images', f));
+  fd.append('gate', document.getElementById('uploadGate').value);
+
+  try {
+    document.getElementById('recogProgText').textContent = `Processing ${recogFilesArr.length} images...`;
+    document.getElementById('recogProgFill').style.width = '30%';
+
+    const res = await fetch('/api/recognize/upload',{method:'POST',body:fd});
+    const data = await res.json();
+    document.getElementById('recogProgFill').style.width = '100%';
+
+    setTimeout(()=>{document.getElementById('recogProgress').style.display='none';},500);
+
+    let totalFaces=0, authCount=0, unauthCount=0;
+    data.results.forEach(r=>{
+      r.results.forEach(res=>{
+        totalFaces++;
+        if(res.authorized) authCount++; else unauthCount++;
+      });
+    });
+
+    document.getElementById('recogSummary').style.display = 'block';
+    document.getElementById('recogStats').innerHTML = `
+      <div class="stat" style="--accent:var(--c1)"><div class="stat-icon">🖼️</div><div class="stat-val">${data.files_processed}</div><div class="stat-lbl">Images</div></div>
+      <div class="stat" style="--accent:var(--c2)"><div class="stat-icon">👤</div><div class="stat-val">${totalFaces}</div><div class="stat-lbl">Faces Found</div></div>
+      <div class="stat" style="--accent:var(--c3)"><div class="stat-icon">✅</div><div class="stat-val">${authCount}</div><div class="stat-lbl">Authorized</div></div>
+      <div class="stat" style="--accent:var(--c4)"><div class="stat-icon">❌</div><div class="stat-val">${unauthCount}</div><div class="stat-lbl">Unauthorized</div></div>
+    `;
+
+    document.getElementById('recogResults').innerHTML = data.results.map(r=>`
+      <div class="img-result">
+        <div class="img-fname">📄 ${r.filename}</div>
+        ${r.annotated_image?`<img src="data:image/jpeg;base64,${r.annotated_image}" alt="${r.filename}">`:''}
+        ${r.error?`<div style="color:var(--c4);font-size:13px;">❌ ${r.error}</div>`:''}
+        ${r.results.map(res=>`
+          <div class="detect-card ${res.authorized?'detect-auth':'detect-unauth'}" style="margin-top:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div class="detect-name" style="color:${res.authorized?'var(--c3)':'var(--c4)'};">${res.person_name}</div>
+                <div class="detect-conf">${res.authorized?`Confidence: ${res.confidence}%`:'Not in database'}</div>
+              </div>
+              <div class="pill ${res.authorized?'pill-green':'pill-red'}">${res.authorized?'AUTHORIZED':'UNAUTHORIZED'}</div>
+            </div>
+          </div>`).join('')}
+        ${!r.results.length&&!r.error?'<div style="color:var(--muted);font-size:13px;margin-top:6px;">No faces detected in this image</div>':''}
+      </div>
+    `).join('');
+  } catch(e) {
+    toast('Recognition error: '+e.message, false);
+    document.getElementById('recogProgress').style.display='none';
+  } finally {
+    btn.innerHTML='🔍 RECOGNIZE FACES'; btn.disabled=false;
+  }
+}
+
+// ── User Management ────────────────────────────────────────────
+async function loadUsers(status='all') {
+  const users = await fetch(`/api/admin/users?status=${status}`).then(r=>r.json());
+  document.getElementById('usersTable').innerHTML = users.map(u=>`
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:34px;height:34px;border-radius:50%;background:${u.avatar_color||'#6C63FF'};
+            display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;">
+            ${(u.full_name||u.username)[0].toUpperCase()}
+          </div>
+          <div>
+            <div style="font-weight:600;">${u.full_name||u.username}</div>
+            <div style="font-size:11px;color:var(--muted);">@${u.username}</div>
+          </div>
+        </div>
+      </td>
+      <td style="color:var(--muted);font-size:12px;">${u.email}</td>
+      <td style="font-size:12px;">${u.department||'—'}</td>
+      <td style="font-size:12px;color:var(--muted);">${fmtTime(u.created_at)}</td>
+      <td>
+        <span class="pill ${u.approved?'pill-green':'pill-yellow'}">
+          ${u.approved?'✅ Approved':'⏳ Pending'}
+        </span>
+        ${u.role==='admin'?'<span class="pill pill-blue" style="margin-left:4px;">Admin</span>':''}
+      </td>
+      <td>
+        ${u.role!=='admin'?`
+          ${!u.approved?`<button class="btn btn-success btn-sm" onclick="approveUser('${u.id}')">✅ Approve</button> `:''}
+          <button class="btn btn-sm" style="background:rgba(255,184,0,0.1);border:1px solid rgba(255,184,0,0.2);color:var(--c5);" onclick="toggleUser('${u.id}')">
+            ${u.approved?'🔒 Disable':'🔓 Enable'}
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')">🗑️</button>
+        `:'—'}
+      </td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px;">No users found</td></tr>';
+}
+
+async function approveUser(id) {
+  const d = await fetch(`/api/admin/users/${id}/approve`,{method:'POST'}).then(r=>r.json());
+  toast(d.message||'User approved'); loadUsers('pending');
+}
+async function rejectUser(id) {
+  if(!confirm('Delete this user?')) return;
+  await fetch(`/api/admin/users/${id}/reject`,{method:'POST'});
+  toast('User removed'); loadUsers('pending');
+}
+async function toggleUser(id) {
+  await fetch(`/api/admin/users/${id}/toggle`,{method:'POST'});
+  toast('User status updated'); loadUsers('all');
+}
+
+// ── Faces ──────────────────────────────────────────────────────
+async function loadFaces() {
+  const faces = await fetch('/api/faces/list').then(r=>r.json());
+  document.getElementById('facesTable').innerHTML = faces.map(f=>`
+    <tr>
+      <td><div style="font-weight:600;">${f.person_name}</div><div style="font-size:11px;color:var(--muted);">ID: ${f.person_id}</div></td>
+      <td><span class="pill pill-blue">${f.category||'staff'}</span></td>
+      <td style="font-size:12px;color:var(--muted);">${f.registered_by||'—'}</td>
+      <td style="font-size:12px;color:var(--muted);">${fmtTime(f.registered_at)}</td>
+      <td><span class="pill ${f.is_authorized?'pill-green':'pill-red'}">${f.is_authorized?'✅ Authorized':'❌ Blocked'}</span></td>
+      <td>
+        <button class="btn btn-sm" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.2);color:var(--c1);" onclick="toggleFace('${f.person_id}')">🔄 Toggle</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteFace('${f.person_id}')">🗑️</button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px;">No faces registered yet</td></tr>';
+}
+async function toggleFace(id) {
+  await fetch(`/api/faces/${id}/toggle`,{method:'POST'});
+  toast('Authorization updated'); loadFaces();
+}
+async function deleteFace(id) {
+  if(!confirm('Delete this face record?')) return;
+  await fetch(`/api/faces/${id}`,{method:'DELETE'});
+  toast('Face record deleted'); loadFaces();
+}
+
+// ── Logs ───────────────────────────────────────────────────────
+async function loadLogs(status='') {
+  const logs = await fetch(`/api/logs?status=${status}&limit=100`).then(r=>r.json());
+  document.getElementById('logsTable').innerHTML = logs.map(l=>`
+    <tr>
+      <td style="font-weight:600;">${l.person_name}</td>
+      <td><span class="pill ${l.status==='authorized'?'pill-green':'pill-red'}">${l.status==='authorized'?'✅':'❌'} ${l.status}</span></td>
+      <td style="color:var(--c1);">${l.confidence?l.confidence.toFixed(1)+'%':'—'}</td>
+      <td style="font-size:12px;">${l.gate}</td>
+      <td><span class="pill pill-blue" style="font-size:10px;">${l.detection_method||'—'}</span></td>
+      <td style="font-size:12px;color:var(--muted);">${fmtAgo(l.timestamp)}</td>
+      <td>
+        ${l.status==='unauthorized'?`
+          <button class="btn btn-success btn-sm" onclick="overrideLog('${l.id}',true)">✅ Allow</button>
+        `:''}
+      </td>
+    </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px;">No logs found</td></tr>';
+}
+async function overrideLog(id, allow) {
+  await fetch(`/api/logs/${id}/override`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({allow,note:'Admin override'})});
+  toast('Entry decision updated'); loadLogs('');
+}
+
+// ── Alerts ─────────────────────────────────────────────────────
+async function loadAlerts() {
+  const alerts = await fetch('/api/alerts').then(r=>r.json());
+  document.getElementById('alertsList').innerHTML = alerts.map(a=>`
+    <div class="alert-item">
+      <div>
+        <div style="font-weight:600;color:var(--c4);">🚨 ${a.message}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">${a.gate} • ${fmtAgo(a.timestamp)}</div>
+      </div>
+      <button class="btn btn-success btn-sm" onclick="resolveAlert('${a.id}')">✅ Resolve</button>
+    </div>`).join('') || '<div style="text-align:center;color:var(--muted);padding:40px;">🎉 No active alerts</div>';
+}
+async function resolveAlert(id) {
+  await fetch(`/api/alerts/${id}/resolve`,{method:'POST'});
+  toast('Alert resolved'); loadAlerts();
+}
+
+// ── Training ───────────────────────────────────────────────────
+function handleTrainUpload(input) {
+  trainFilesArr = Array.from(input.files);
+  const persons = new Set(trainFilesArr.map(f=>f.webkitRelativePath.split('/')[1]).filter(Boolean));
+  document.getElementById('trainFileInfo').textContent =
+    `✓ ${trainFilesArr.length} images, ${persons.size} persons detected`;
+  document.getElementById('uploadTrainBtn').disabled = false;
+}
+
+async function uploadTrainingData() {
+  if(!trainFilesArr.length) return;
+  const btn = document.getElementById('uploadTrainBtn');
+  btn.innerHTML = '<span class="spinner"></span>Uploading...'; btn.disabled=true;
+  const fd = new FormData();
+  trainFilesArr.forEach(f=>fd.append('files',f,f.webkitRelativePath||f.name));
+  const d = await fetch('/api/train/upload',{method:'POST',body:fd}).then(r=>r.json());
+  btn.innerHTML='⬆️ UPLOAD DATASET'; btn.disabled=false;
+  if(d.success) toast(`Uploaded: ${d.files_saved} images, ${d.persons_found} persons`);
+  else toast(d.error||'Upload failed',false);
+}
+
+async function startTraining() {
+  const btn = document.getElementById('trainBtn');
+  btn.innerHTML='<span class="spinner"></span>TRAINING...'; btn.disabled=true;
+  document.getElementById('trainStatus').style.display='block';
+  document.getElementById('trainResult').style.display='none';
+
+  await fetch('/api/train/start',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model_type:document.getElementById('modelType').value})});
+
+  const poll = setInterval(async()=>{
+    const s = await fetch('/api/train/status').then(r=>r.json());
+    const pct = s.total>0?Math.round((s.progress/s.total)*100):0;
+    document.getElementById('trainCurrentText').textContent = s.current;
+    document.getElementById('trainPct').textContent = pct+'%';
+    document.getElementById('trainProgFill').style.width = pct+'%';
+
+    if(s.done) {
+      clearInterval(poll);
+      btn.innerHTML='🎯 START TRAINING'; btn.disabled=false;
+      document.getElementById('trainStatus').style.display='none';
+      document.getElementById('trainResult').style.display='block';
+      const r = s.result||{};
+      document.getElementById('trainResultText').innerHTML =
+        `Persons trained: <b>${r.total_persons||0}</b><br>
+         Encodings extracted: <b>${r.total_encodings||0}</b><br>
+         Status: <b style="color:var(--c3);">${r.status||'complete'}</b>`;
+      toast('Training completed!');
+      loadTrainHistory();
+    }
+  }, 1000);
+}
+
+async function loadTrainHistory() {
+  const sessions = await fetch('/api/training/history').then(r=>r.json());
+  document.getElementById('trainHistory').innerHTML = sessions.map(s=>`
+    <tr>
+      <td style="font-size:12px;color:var(--muted);">${fmtTime(s.started_at)}</td>
+      <td style="font-size:12px;">${s.model_type||'—'}</td>
+      <td style="color:var(--c1);">${s.total_persons||'—'}</td>
+      <td style="color:var(--c1);">${s.total_images||'—'}</td>
+      <td><span class="pill ${s.status==='completed'?'pill-green':'pill-yellow'}">${s.status}</span></td>
+      <td style="font-size:12px;color:var(--muted);">
+        ${s.completed_at&&s.started_at?Math.round((new Date(s.completed_at)-new Date(s.started_at))/1000)+'s':'—'}
+      </td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">No training sessions yet</td></tr>';
+}
+
+// ── Face Registration ──────────────────────────────────────────
+function handleFaceImages(input) {
+  faceFilesArr = Array.from(input.files);
+  document.getElementById('faceFileInfo').textContent = `✓ ${faceFilesArr.length} images selected`;
+}
+
+async function registerFace() {
+  const name = document.getElementById('regPersonName').value.trim();
+  if(!name){toast('Person name required',false);return;}
+  if(!faceFilesArr.length){toast('Please select face images',false);return;}
+
+  const btn = document.getElementById('registerFaceBtn');
+  btn.innerHTML='<span class="spinner"></span>Registering...'; btn.disabled=true;
+
+  const fd = new FormData();
+  fd.append('person_name',name);
+  fd.append('person_id',document.getElementById('regPersonId').value||'');
+  fd.append('category',document.getElementById('regCategory').value);
+  fd.append('is_authorized',document.getElementById('regAuthorized').checked);
+  faceFilesArr.forEach(f=>fd.append('images',f));
+
+  try{
+    const d = await fetch('/api/faces/register',{method:'POST',body:fd}).then(r=>r.json());
+    const res = document.getElementById('registerResult');
+    res.style.display='block';
+    if(d.success){
+      res.innerHTML=`<div style="color:var(--c3);padding:12px;background:rgba(0,255,136,0.06);border-radius:8px;">
+        ✅ Registered: ${name}<br>
+        Images: ${d.images_processed} | Encodings: ${d.encodings_extracted}
+        ${d.errors.length?`<br>⚠️ ${d.errors.join(', ')}`:''}
+      </div>`;
+      toast('Face registered successfully!');
+    } else {
+      res.innerHTML=`<div style="color:var(--c4);padding:12px;background:rgba(255,51,102,0.06);border-radius:8px;">❌ ${d.error}</div>`;
+      toast(d.error,false);
+    }
+  }catch(e){toast('Error: '+e.message,false);}
+  finally{btn.innerHTML='➕ REGISTER PERSON';btn.disabled=false;}
+}
+
+async function loadEngine() {
+  const d = await fetch('/api/system/load-engine',{method:'POST'}).then(r=>r.json());
+  toast(`Engine loaded: ${d.persons_loaded} persons`);
+}
+
+async function logout() {
+  await fetch('/api/auth/logout',{method:'POST'});
+  window.location.href='/';
+}
+
+// Drag and drop upload zone
+const uz = document.getElementById('uploadZone');
+if(uz){
+  uz.addEventListener('dragover',e=>{e.preventDefault();uz.classList.add('drag');});
+  uz.addEventListener('dragleave',()=>uz.classList.remove('drag'));
+  uz.addEventListener('drop',e=>{
+    e.preventDefault();uz.classList.remove('drag');
+    const files = Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/'));
+    if(files.length){
+      recogFilesArr=files;
+      document.getElementById('recogFileList').textContent=`✓ ${files.length} images dropped`;
+      document.getElementById('recogBtn').disabled=false;
+    }
+  });
+}
+
+// Init
+loadDashboard();
+setInterval(loadDashboard, 15000);
+</script>
+</body>
+</html>
