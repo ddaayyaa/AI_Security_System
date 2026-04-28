@@ -1,5 +1,6 @@
 flask
 opencv-python-headless
+Pillow
 cmake
 face-recognition-models
 numpy
