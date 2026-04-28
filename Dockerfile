@@ -1,14 +1,15 @@
-# Use a pre-configured image that already has dlib and face_recognition installed
+# This base image already has the heavy dlib and face_recognition installed!
 FROM animcogn/face_recognition:latest
 
 # Set the working directory
 WORKDIR /app
 
-# Copy your local code into the container
+# Copy your requirements and install the light web stuff
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of your app's code
 COPY . .
 
-# Install the lighter requirements (OpenCV and Flask/Django)
-RUN pip install --no-cache-dir opencv-python-headless Flask numpy
-
-# Start your application (Replace 'app.py' with your main file name)
+# Run the app
 CMD ["python", "app.py"]
