@@ -12,6 +12,7 @@ Full-stack web application with:
 
 import os, json, uuid, time, base64, io, hashlib, datetime, threading, logging
 import numpy as np
+import os
 from pathlib import Path
 from functools import wraps
 from flask import (Flask, render_template, request, jsonify,
@@ -975,4 +976,5 @@ if __name__ == '__main__':
     print(f"  Known persons: {len(face_engine.known_encodings)}")
     print(f"  Server       : http://localhost:5000")
     print("=" * 55)
-    app.run(debug=True, port=5000, threaded=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
